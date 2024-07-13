@@ -6,15 +6,14 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strings"
-
-	imgH "pdf_book_processor/imageHandler"
 
 	license "github.com/unidoc/unipdf/v3/common/license"
 	extractor "github.com/unidoc/unipdf/v3/extractor"
 	model "github.com/unidoc/unipdf/v3/model"
+
+	imgH "pdf_book_processor/imageHandler"
 )
 
 func ConvertToTextWhenNotScanned(pdfPath string) {
@@ -26,65 +25,7 @@ func ConvertToTextWhenNotScanned(pdfPath string) {
 	}
 }
 
-func runTesseractOCR(imagepath string) string {
-	tempOutFile := "output" // Tesseract automatically adds .txt
-	cmd := exec.Command("/bin/tesseract", imagepath, tempOutFile)
-	if err := cmd.Run(); err != nil {
-		log.Fatalf("Failed to convert image with tesseract %v\n", err)
-		return ""
-	}
-
-	text, err := os.ReadFile(tempOutFile + ".txt")
-	if err != nil {
-		log.Fatalf("Failed to convert image with tesseract %v\n", err)
-		return ""
-	}
-
-	os.Remove(tempOutFile + ".txt")
-
-	return string(text)
-}
-
-func ImagesToText(inputDir, pdfPath string, needProcessing bool) {
-	files, err := os.ReadDir(inputDir)
-	if err != nil {
-		log.Fatalf("Failed to read directory %s: %v\n", inputDir, err)
-	}
-
-	for _, file := range files {
-		if filepath.Ext(file.Name()) == ".jpg" || filepath.Ext(file.Name()) == ".jpeg" {
-			imagePath := filepath.Join(inputDir, file.Name())
-
-			fmt.Printf("Processing image %s.\n", imagePath)
-			processedImagePath := imgH.ProcessImage(imagePath, needProcessing)
-
-			fmt.Printf("Using tesseract on image %s.\n", processedImagePath)
-
-			text := runTesseractOCR(processedImagePath)
-
-			// Adding the text to the txt file.
-			txtPath := strings.Replace(pdfPath, "pdf", "txt", -1) // -1 means all instances.
-			file, err := os.OpenFile(txtPath, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
-			if err != nil {
-				log.Fatalf("Failed to a file in path %s, the error was: %v\n", txtPath, err)
-			}
-			defer file.Close()
-
-			numOfBits, err := file.WriteString(text)
-			if err != nil {
-				log.Fatalf("Failed to write the text into a txt file, the error was: %v\n", err)
-			} else {
-				fmt.Printf("%d bits were written.\n", numOfBits)
-			}
-
-			if err := file.Sync(); err != nil {
-				log.Fatalf("Failed to sync file: %v", err)
-			}
-		}
-	}
-}
-
-func splitTextByAnimals(text string, animals []string) map[string]string {
+func SplitTextByAnimals(text string, animals []string) map[string]string {
 	splittedText := map[string]string{}
 	pattern := ""
 
@@ -181,7 +122,11 @@ func ConvertWithUniPDF(pdfPath, outputDirPath string) {
 			}
 			defer file.Close()
 
-			text := runTesseractOCR(imagePath)
+			text, err := imgH.ExtractTextFromImage(imagePath)
+			if err != nil {
+				log.Fatalf("Failed converting image %d to text: %v", j, err)
+			}
+
 			numOfBits, err := file.WriteString(text)
 			if err != nil {
 				log.Fatalf("Failed to write the text into a txt file, the error was: %v\n", err)

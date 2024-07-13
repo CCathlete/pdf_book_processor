@@ -2,37 +2,61 @@ package imagehandler
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 
 	"gocv.io/x/gocv"
 )
 
+func LoadImage(imagePath string) (gocv.Mat, error) {
+	image := gocv.IMRead(imagePath, gocv.IMReadAnyColor)
+	if image.Empty() {
+		return image, fmt.Errorf("error reading image from: %s", imagePath)
+	}
+	return image, nil
+}
+
+func ConvertToGray(image gocv.Mat) gocv.Mat {
+	grayImage := gocv.NewMat()
+	gocv.CvtColor(image, &grayImage, gocv.ColorBGRToGray)
+	return grayImage
+}
+
+func ThresholdImage(image gocv.Mat) gocv.Mat {
+	binaryImage := gocv.NewMat()
+	gocv.Threshold(
+		image,
+		&binaryImage,
+		0,
+		255,
+		gocv.ThresholdBinary+gocv.ThresholdOtsu,
+	)
+	return binaryImage
+}
+
 func ProcessImage(imagePath string, needProcessing bool) (outPath string) {
 	outDir := fmt.Sprintf("%s/AfterProcessing", filepath.Dir(imagePath))
 	outPath = fmt.Sprintf("%s/Processed_%s", outDir, filepath.Base(imagePath))
 
 	if needProcessing {
+		// Loading the image.
+		beforeProcImage, err := LoadImage(imagePath)
+		if err != nil {
+			log.Fatalf("\nProblem with loading the image: %v", err)
+		}
+
 		// Converting to grayscale.
-		image := gocv.IMRead(imagePath, gocv.IMReadGrayScale)
-		if image.Empty() {
-			fmt.Printf("Error when reading image %s\n", imagePath)
+		grayImage := ConvertToGray(beforeProcImage)
+		if grayImage.Empty() {
+			fmt.Printf("Error when converting to grayscale the image at %s\n", imagePath)
 			return ""
 		}
-		defer image.Close()
+		defer grayImage.Close()
 
-		// Applying adaptive thresholding.
-		afterThresh := gocv.NewMat()
+		// Applying thresholding.
+		afterThresh := ThresholdImage(grayImage)
 		defer afterThresh.Close()
-		gocv.AdaptiveThreshold(
-			image,
-			&afterThresh,
-			255,
-			gocv.AdaptiveThresholdMean,
-			gocv.ThresholdBinary,
-			11,
-			2,
-		)
 
 		// Creating the output dir if it doesn't exist.
 		// Note: I used isNotExists because it takes into account an empty file.

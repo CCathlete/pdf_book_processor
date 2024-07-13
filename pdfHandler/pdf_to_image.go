@@ -2,12 +2,13 @@ package pdfhandler
 
 import (
 	"fmt"
+	"image"
 	"image/jpeg"
 	"os"
 	"path/filepath"
 
 	license "github.com/unidoc/unipdf/v3/common/license"
-	"github.com/unidoc/unipdf/v3/model"
+	model "github.com/unidoc/unipdf/v3/model"
 	render "github.com/unidoc/unipdf/v3/render"
 )
 
@@ -63,6 +64,7 @@ func convertToImages(pdfPath, outputDirPath string) error {
 		if err != nil {
 			return fmt.Errorf("failed to render page %d: %v", pageNum, err)
 		}
+		scaledImage := scaleImage(img, img.Bounds().Dx()*3, img.Bounds().Dy()*3)
 
 		imagePath := filepath.Join(outputDirPath, fmt.Sprintf("page_%03d.jpg", pageNum))
 		outImg, err := os.Create(imagePath)
@@ -71,7 +73,7 @@ func convertToImages(pdfPath, outputDirPath string) error {
 		}
 		defer outImg.Close()
 
-		err = jpeg.Encode(outImg, img, &jpeg.Options{Quality: 100})
+		err = jpeg.Encode(outImg, scaledImage, &jpeg.Options{Quality: 100})
 		if err != nil {
 			return fmt.Errorf("failed to save image for page %d: %v", pageNum, err)
 		}
@@ -81,4 +83,25 @@ func convertToImages(pdfPath, outputDirPath string) error {
 	//common.SetLogger(common.NewConsoleLogger(common.LogLevelWarning))
 
 	return nil
+}
+
+func scaleImage(img image.Image, width, height int) image.Image {
+	// Creating a new image with the desired size.
+	newImg := image.NewRGBA(image.Rect(0, 0, width, height))
+
+	// Scaling the original image by transforming it to the new image.
+	newBounds := newImg.Bounds()
+	newDx, newDy := newBounds.Dx(), newBounds.Dy()
+	for y := 0; y < newDy; y++ {
+		for x := 0; x < newDx; x++ {
+			// Matching every x, y in the new image to an x, y in the original image, using the aspect ratio.
+			originalX := x * img.Bounds().Dx() / newDx
+			originalY := y * img.Bounds().Dy() / newDy
+
+			// Setting the values of the pixels in the new image correspondingly.
+			newImg.Set(x, y, img.At(originalX, originalY))
+		}
+	}
+
+	return newImg
 }

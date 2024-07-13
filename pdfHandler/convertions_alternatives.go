@@ -16,7 +16,7 @@ import (
 	imgH "pdf_book_processor/imageHandler"
 )
 
-func ConvertToTextWhenNotScanned(pdfPath string) {
+func convertToTextWhenNotScanned(pdfPath string) {
 	cmd := exec.Command("bash", "-c", "pdftotext "+pdfPath)
 	stdOutErr, err := cmd.CombinedOutput()
 	if err != nil {
@@ -25,7 +25,7 @@ func ConvertToTextWhenNotScanned(pdfPath string) {
 	}
 }
 
-func SplitTextByAnimals(text string, animals []string) map[string]string {
+func splitTextByAnimals(text string, animals []string) map[string]string {
 	splittedText := map[string]string{}
 	pattern := ""
 
@@ -51,7 +51,7 @@ func SplitTextByAnimals(text string, animals []string) map[string]string {
 	return splittedText
 }
 
-func ConvertWithUniPDF(pdfPath, outputDirPath string) {
+func convertWithUniPDF(pdfPath, outputDirPath string) {
 	err := license.SetMeteredKey(os.Getenv(`UNIDOC_LICENSE_API_KEY`))
 	if err != nil {
 		panic(err)

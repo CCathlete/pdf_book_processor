@@ -3,13 +3,11 @@ module pdf_book_processor
 go 1.22.2
 
 require (
-	github.com/heussd/pdftotext-go v0.0.0-20240305185622-aacf40f2d1e2
 	github.com/unidoc/unipdf/v3 v3.60.0
 	gocv.io/x/gocv v0.37.0
 )
 
 require (
-	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

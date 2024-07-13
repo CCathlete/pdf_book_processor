@@ -6,9 +6,9 @@ import (
 )
 
 func ConvertPdfToImages(pdfPath, outDirPath string) {
-	err := convertToImages(pdfPath, outDirPath)
+	err := convertToImgGhostscript(pdfPath, outDirPath, "jpeg", 300)
 	if err != nil {
-		log.Fatalf("ConvertPdfToImages: %v", err)
+		log.Fatalf("convertToImgGhostscript: %v", err)
 	}
 
 	fmt.Printf("\nPDF converted to images successfully at %s\n.", outDirPath)

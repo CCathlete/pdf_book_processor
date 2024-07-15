@@ -8,7 +8,7 @@ import (
 	"gocv.io/x/gocv"
 )
 
-func LoadImage(imagePath string) (gocv.Mat, error) {
+func loadImage(imagePath string) (gocv.Mat, error) {
 	image := gocv.IMRead(imagePath, gocv.IMReadAnyColor)
 	if image.Empty() {
 		return image, fmt.Errorf("error reading image from: %s", imagePath)
@@ -16,13 +16,13 @@ func LoadImage(imagePath string) (gocv.Mat, error) {
 	return image, nil
 }
 
-func ConvertToGray(image gocv.Mat) gocv.Mat {
+func convertToGray(image gocv.Mat) gocv.Mat {
 	grayImage := gocv.NewMat()
 	gocv.CvtColor(image, &grayImage, gocv.ColorBGRToGray)
 	return grayImage
 }
 
-func ThresholdImage(image gocv.Mat) gocv.Mat {
+func thresholdImage(image gocv.Mat) gocv.Mat {
 	binaryImage := gocv.NewMat()
 	gocv.Threshold(
 		image,
@@ -34,7 +34,7 @@ func ThresholdImage(image gocv.Mat) gocv.Mat {
 	return binaryImage
 }
 
-func ProcessImage(imagePath string, needProcessing bool) (string, error) {
+func processImage(imagePath string, needProcessing bool) (string, error) {
 	outDir := fmt.Sprintf("%s/AfterProcessing", filepath.Dir(imagePath))
 	outPath := fmt.Sprintf("%s/Processed_%s", outDir, filepath.Base(imagePath))
 
@@ -48,20 +48,20 @@ func ProcessImage(imagePath string, needProcessing bool) (string, error) {
 
 	if needProcessing {
 		// Loading the image.
-		beforeProcImage, err := LoadImage(imagePath)
+		beforeProcImage, err := loadImage(imagePath)
 		if err != nil {
 			return "", fmt.Errorf("\nProblem with loading the image: %v", err)
 		}
 
 		// Converting to grayscale.
-		grayImage := ConvertToGray(beforeProcImage)
+		grayImage := convertToGray(beforeProcImage)
 		if grayImage.Empty() {
 			fmt.Printf("Error when converting to grayscale the image at %s\n", imagePath)
 		}
 		defer grayImage.Close()
 
 		// Applying thresholding.
-		afterThresh := ThresholdImage(grayImage)
+		afterThresh := thresholdImage(grayImage)
 		defer afterThresh.Close()
 
 		// Saving the processed image.

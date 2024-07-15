@@ -8,7 +8,7 @@ import (
 )
 
 // Detecting tables in an image and returning their bounding boxes.
-func DetectTable(img gocv.Mat) []image.Rectangle {
+func detectTable(img gocv.Mat) []image.Rectangle {
 	contours := gocv.FindContours(img, gocv.RetrievalExternal, gocv.ChainApproxSimple)
 	var tableBoxes []image.Rectangle
 
@@ -25,7 +25,7 @@ func DetectTable(img gocv.Mat) []image.Rectangle {
 }
 
 // Extracting table regions from an image and saving them as separate images.
-func ExtractTableImages(img gocv.Mat, tableBoxes []image.Rectangle, outDir string) error {
+func extractTableImages(img gocv.Mat, tableBoxes []image.Rectangle, outDir string) error {
 	for i, rectBound := range tableBoxes {
 		tableImage := img.Region(rectBound) // Returns a Mat with poointers to the region in the rectBound.
 		outFilePath := fmt.Sprintf("%s/table_%d.jpg", outDir, i)

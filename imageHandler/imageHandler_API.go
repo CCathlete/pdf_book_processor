@@ -17,7 +17,8 @@ func GetTextFromImages(convertedPdfDir string, chapterStartingPageNum int) error
 	dir.Close()
 
 	for imgNum, fileName := range fileNames {
-		if filepath.Ext(fileName) == ".jpeg" {
+		fileExtension := filepath.Ext(fileName)
+		if fileExtension == ".jpeg" {
 			imgProcessingFailed, imgLoadingFailed, imgDetectionFailed, imgExtractionFailed := false, false, false, false
 			tableExtractionFailed := false
 
@@ -29,9 +30,10 @@ func GetTextFromImages(convertedPdfDir string, chapterStartingPageNum int) error
 				processedImgPath = preProcessImgPath // We could still try to work with the pre processed image.
 			}
 
-			// Creating an output dir for the inner images and tables for each page (jpeg) of the chapter.
-			outDir := fmt.Sprintf("%s/inner_images", processedImgPath)
+			// Creating the path of the output dir for the inner images and tables for each page (jpeg) of the chapter.
+			// The directory itself is created in extractInnerImages (if needed).
 			pageNum := imgNum + chapterStartingPageNum
+			outDir := fmt.Sprintf("%s/page_%d", convertedPdfDir, pageNum)
 
 			// Loading the image as gocv.Mat
 			processedImg, err := loadImage(processedImgPath)

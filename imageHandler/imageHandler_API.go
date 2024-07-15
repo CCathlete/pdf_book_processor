@@ -65,6 +65,8 @@ func GetTextFromImages(convertedPdfDir string, chapterStartingPageNum int) error
 					fmt.Printf("couldn't extract inner tables in %s: %v", processedImgPath, err)
 					tableExtractionFailed = true
 				}
+
+				// Extracting
 			}
 		}
 	}

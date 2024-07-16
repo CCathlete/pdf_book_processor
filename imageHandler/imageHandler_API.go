@@ -16,17 +16,17 @@ func GetTextFromImages(convertedPdfDir, outputTextDir string, chapterStartingPag
 	}
 	dir.Close()
 
+	totalExtractionFailure := true
+
 	for imgNum, fileName := range fileNames {
 		fileExtension := filepath.Ext(fileName)
 		if fileExtension == ".jpeg" {
-			imgProcessingFailed, imgLoadingFailed, imgDetectionFailed, imgExtractionFailed := false, false, false, false
-			tableExtractionFailed := false
+			ExtractionFailure := false
 
 			preProcessImgPath := fmt.Sprintf("%s/%s", convertedPdfDir, fileName)
 			processedImgPath, err := processImage(preProcessImgPath, true)
 			if err != nil {
 				fmt.Printf("couldn't process image %s: %v", preProcessImgPath, err)
-				imgProcessingFailed = true
 				processedImgPath = preProcessImgPath // We could still try to work with the pre processed image.
 			}
 
@@ -40,22 +40,16 @@ func GetTextFromImages(convertedPdfDir, outputTextDir string, chapterStartingPag
 			if err != nil {
 				fmt.Printf("couldn't load processed image %s: %v", preProcessImgPath, err)
 				// If the loading failed we can't work with this image.
-				imgLoadingFailed, imgDetectionFailed, imgDetectionFailed = true, true, true
-				tableExtractionFailed = true
-			}
-
-			if !imgLoadingFailed {
+			} else {
 				// Detecting inner images and extracting them into new jpegs inside outDir we chose.
 				innerImgBoundaries, err := detectInnerImages(processedImg)
 				if err != nil {
 					fmt.Printf("couldn't detect inner images in %s: %v", processedImgPath, err)
-					imgDetectionFailed = true
 				}
 
 				err = extractInnerImages(processedImg, innerImgBoundaries, outDir, pageNum)
 				if err != nil {
 					fmt.Printf("couldn't extract inner images in %s: %v", processedImgPath, err)
-					imgExtractionFailed = true
 				}
 
 				// Erasing the inner images from the preprocessed image.
@@ -66,7 +60,6 @@ func GetTextFromImages(convertedPdfDir, outputTextDir string, chapterStartingPag
 				err = extractTableImages(processedImg, innerTableBoundaries, outDir)
 				if err != nil {
 					fmt.Printf("couldn't extract inner tables in %s: %v", processedImgPath, err)
-					tableExtractionFailed = true
 				}
 
 				// Erasing the inner tables from the preprocessed image.
@@ -87,12 +80,18 @@ func GetTextFromImages(convertedPdfDir, outputTextDir string, chapterStartingPag
 					if err != nil {
 						fmt.Printf("couldn't extract text from %s: %v", innerJpegPath, err)
 					} else if SaveExtractedText(text, fmt.Sprintf("%s/book_content.txt", outputTextDir)) != nil {
-						return fmt.Errorf("couldn't save the extracted text: %v", err)
+						fmt.Printf("couldn't save the extracted text: %v", err)
+						ExtractionFailure = true
 					}
 				}
 			}
+			totalExtractionFailure = totalExtractionFailure && ExtractionFailure
 		}
 	}
 
-	return nil
+	if totalExtractionFailure {
+		return fmt.Errorf("couldn't extract text at all")
+	} else {
+		return nil
+	}
 }

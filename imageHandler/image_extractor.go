@@ -28,7 +28,15 @@ func isRegion(imgSection gocv.Mat) bool {
 }
 
 func detectInnerImages(img gocv.Mat) ([]image.Rectangle, error) {
-	contours := gocv.FindContours(img, gocv.RetrievalExternal, gocv.ChainApproxSimple)
+	blur := gocv.NewMat()
+	gocv.GaussianBlur(img, &blur, image.Point{X: 5, Y: 5}, 0, 0, gocv.BorderDefault)
+	defer blur.Close()
+
+	edges := gocv.NewMat()
+	gocv.Canny(blur, &edges, 100, 200)
+	defer edges.Close()
+
+	contours := gocv.FindContours(edges, gocv.RetrievalExternal, gocv.ChainApproxSimple)
 	var imageBoxes []image.Rectangle
 
 	for i := 0; i < contours.Size(); i++ {

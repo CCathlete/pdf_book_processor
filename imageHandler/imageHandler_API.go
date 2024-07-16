@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 )
 
-func GetTextFromImages(convertedPdfDir string, chapterStartingPageNum int) error {
+func GetTextFromImages(convertedPdfDir, outputTextDir string, chapterStartingPageNum int) error {
 	// Going over the pages (as jpegs) and preprocessing them.
 	dir, err1 := os.Open(convertedPdfDir)
 
@@ -58,8 +58,8 @@ func GetTextFromImages(convertedPdfDir string, chapterStartingPageNum int) error
 					imgExtractionFailed = true
 				}
 
-				// Erase the inner images from the preprocessed image.
-				maskRegions(processedImg, innerImgBoundaries)
+				// Erasing the inner images from the preprocessed image.
+				maskRegions(&processedImg, innerImgBoundaries)
 
 				// Detecting inner tables and extracting them into new jpegs inside outDir.
 				innerTableBoundaries := detectTable(processedImg)
@@ -69,10 +69,27 @@ func GetTextFromImages(convertedPdfDir string, chapterStartingPageNum int) error
 					tableExtractionFailed = true
 				}
 
-				// Erase the inner tables from the preprocessed image.
-				maskRegions(processedImg, innerTableBoundaries)
+				// Erasing the inner tables from the preprocessed image.
+				maskRegions(&processedImg, innerTableBoundaries)
 
-				// Extracting
+				// Going over outDir for each page of the chapter, extracting the text from all of the images we extracted.
+				dir, err1 := os.Open(outDir)
+
+				fileNames, err2 := dir.Readdirnames(-1)
+				if err1 != nil || err2 != nil {
+					return fmt.Errorf("couldn't go over files in dir %s: %v\n%v", outDir, err1, err2)
+				}
+				dir.Close()
+
+				for _, innerJpeg := range fileNames {
+					innerJpegPath := fmt.Sprintf("%s/%s", outDir, innerJpeg)
+					text, err := ExtractTextFromImage(innerJpegPath)
+					if err != nil {
+						fmt.Printf("couldn't extract text from %s: %v", innerJpegPath, err)
+					} else if SaveExtractedText(text, fmt.Sprintf("%s/book_content.txt", outputTextDir)) != nil {
+						return fmt.Errorf("couldn't save the extracted text: %v", err)
+					}
+				}
 			}
 		}
 	}

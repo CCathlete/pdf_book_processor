@@ -8,6 +8,25 @@ import (
 	"gocv.io/x/gocv"
 )
 
+func isRegion(imgSection gocv.Mat) bool {
+	stdDev, meanMat := gocv.NewMat(), gocv.NewMat()
+	defer func() {
+		stdDev.Close()
+		meanMat.Close()
+	}()
+	gocv.MeanStdDev(imgSection, &meanMat, &stdDev)
+
+	// meanMat and stdDev are vectors (1 x n channels matrix) to return values for each channel in RGB. In grayscale it's a 1 x 1 matrix.
+	// So actually it only has a value in (0, 0).
+	stdDevVal := stdDev.GetDoubleAt(0, 0)
+	// Adjusting for a case we have multiple channels.
+	if imgSection.Channels() > 1 {
+		stdDevVal = (stdDev.GetDoubleAt(0, 0) + stdDev.GetDoubleAt(0, 1) + stdDev.GetDoubleAt(0, 2)) / 3
+	}
+
+	return stdDevVal > 35 // This is the threshold value for knowing if there's a sharp chage in brightness.
+}
+
 func detectInnerImages(img gocv.Mat) ([]image.Rectangle, error) {
 	contours := gocv.FindContours(img, gocv.RetrievalExternal, gocv.ChainApproxSimple)
 	var imageBoxes []image.Rectangle

@@ -58,6 +58,9 @@ func GetTextFromImages(convertedPdfDir string, chapterStartingPageNum int) error
 					imgExtractionFailed = true
 				}
 
+				// Erase the inner images from the preprocessed image.
+				maskRegions(processedImg, innerImgBoundaries)
+
 				// Detecting inner tables and extracting them into new jpegs inside outDir.
 				innerTableBoundaries := detectTable(processedImg)
 				err = extractTableImages(processedImg, innerTableBoundaries, outDir)
@@ -65,6 +68,9 @@ func GetTextFromImages(convertedPdfDir string, chapterStartingPageNum int) error
 					fmt.Printf("couldn't extract inner tables in %s: %v", processedImgPath, err)
 					tableExtractionFailed = true
 				}
+
+				// Erase the inner tables from the preprocessed image.
+				maskRegions(processedImg, innerTableBoundaries)
 
 				// Extracting
 			}

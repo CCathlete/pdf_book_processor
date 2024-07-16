@@ -2,6 +2,8 @@ package imagehandler
 
 import (
 	"fmt"
+	"image"
+	"image/color"
 	"os"
 	"path/filepath"
 
@@ -73,4 +75,11 @@ func processImage(imagePath string, needProcessing bool) (string, error) {
 	}
 
 	return outPath, nil
+}
+
+func maskRegions(img *gocv.Mat, regions []image.Rectangle) {
+	for _, region := range regions {
+		// Drawing a white rectangle over each region.
+		gocv.Rectangle(img, region, color.RGBA{255, 255, 255, 0}, -1)
+	}
 }

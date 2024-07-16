@@ -9,7 +9,27 @@ import (
 
 // Detecting tables in an image and returning their bounding boxes.
 func detectTable(img gocv.Mat) []image.Rectangle {
-	contours := gocv.FindContours(img, gocv.RetrievalExternal, gocv.ChainApproxSimple)
+	// Detection is based on the features of vertical and horizontal lines in tables.
+
+	// Detecting horizontal lines.
+	horizontal := gocv.NewMat()
+	horizontalKernel := gocv.GetStructuringElement(gocv.MorphRect, image.Point{X: 30, Y: 1})
+	gocv.MorphologyEx(img, &horizontal, gocv.MorphOpen, horizontalKernel)
+	defer horizontal.Close()
+
+	// Detecting vertical lines.
+	vertical := gocv.NewMat()
+	verticalKernel := gocv.GetStructuringElement(gocv.MorphRect, image.Point{X: 1, Y: 30})
+	gocv.MorphologyEx(img, &vertical, gocv.MorphOpen, verticalKernel)
+	defer vertical.Close()
+
+	// Combining horizontal and vertical lines.
+	bothLines := gocv.NewMat()
+	gocv.AddWeighted(horizontal, 0.5, vertical, 0.5, 0, &bothLines)
+	defer bothLines.Close()
+
+	// Finding the contours of each table.
+	contours := gocv.FindContours(bothLines, gocv.RetrievalExternal, gocv.ChainApproxSimple)
 	var tableBoxes []image.Rectangle
 
 	for i := 0; i < contours.Size(); i++ {

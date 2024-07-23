@@ -7,7 +7,7 @@ import (
 )
 
 // Extracting text using Gosseract.
-func ExtractTextFromImage(imagePath string) (string, error) {
+func extractTextFromImage(imagePath string) (string, error) {
 	client := gosseract.NewClient()
 	defer client.Close()
 
@@ -19,7 +19,7 @@ func ExtractTextFromImage(imagePath string) (string, error) {
 	return text, nil
 }
 
-func SaveExtractedText(text, outFilePath string) error {
+func saveExtractedText(text, outFilePath string) error {
 	err := os.WriteFile(outFilePath, []byte(text), 0644)
 	if err != nil {
 		return err

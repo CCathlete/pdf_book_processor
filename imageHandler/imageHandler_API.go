@@ -76,10 +76,10 @@ func GetTextFromImages(convertedPdfDir, outputTextDir string, chapterStartingPag
 
 				for _, innerJpeg := range fileNames {
 					innerJpegPath := fmt.Sprintf("%s/%s", outDir, innerJpeg)
-					text, err := ExtractTextFromImage(innerJpegPath)
+					text, err := extractTextFromImage(innerJpegPath)
 					if err != nil {
 						fmt.Printf("couldn't extract text from %s: %v", innerJpegPath, err)
-					} else if SaveExtractedText(text, fmt.Sprintf("%s/book_content.txt", outputTextDir)) != nil {
+					} else if saveExtractedText(text, fmt.Sprintf("%s/book_content.txt", outputTextDir)) != nil {
 						fmt.Printf("couldn't save the extracted text: %v", err)
 						ExtractionFailure = true
 					}

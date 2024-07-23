@@ -42,8 +42,13 @@ func detectInnerImages(img gocv.Mat) ([]image.Rectangle, error) {
 	for i := 0; i < contours.Size(); i++ {
 		contour := contours.At(i)
 		rectBound := gocv.BoundingRect(contour)
-		if isRegion(img.Region(rectBound)) {
-			imageBoxes = append(imageBoxes, rectBound)
+		// Filtering out small contours.
+		area := rectBound.Dx() * rectBound.Dy()
+		aspectRatio := float64(rectBound.Dx()) / float64(rectBound.Dy())
+		if area > 1000 && aspectRatio > 0.5 && aspectRatio < 2.0 {
+			if isRegion(img.Region(rectBound)) {
+				imageBoxes = append(imageBoxes, rectBound)
+			}
 		}
 	}
 
